@@ -144,6 +144,65 @@ The service can be run in a Docker container. Here's how to set it up:
    docker-compose exec app npm run prisma:migrate
    ```
 
+### Docker Features
+
+The Docker setup includes:
+
+1. **Multi-stage Build**:
+
+   - Builder stage for compiling TypeScript and generating Prisma client
+   - Production stage with only necessary files and dependencies
+
+2. **Development Mode**:
+
+   - Hot-reload support for faster development
+   - Volume mounting for live code updates
+   - Separate development and production configurations
+
+3. **Database Integration**:
+
+   - PostgreSQL container with persistent storage
+   - Automatic database initialization
+   - Easy migration management
+
+4. **Environment Configuration**:
+
+   - Secure environment variable handling
+   - Configurable JWT settings
+   - Database connection management
+
+5. **Health Monitoring**:
+   - Health check endpoint at `/health`
+   - Container status monitoring
+   - Log aggregation support
+
+### Docker Best Practices
+
+1. **Security**:
+
+   - Use environment variables for sensitive data
+   - Run as non-root user
+   - Keep images updated
+   - Use multi-stage builds to minimize attack surface
+
+2. **Performance**:
+
+   - Optimized layer caching
+   - Minimal production image size
+   - Efficient dependency management
+
+3. **Development**:
+
+   - Hot-reload for faster iteration
+   - Consistent development environment
+   - Easy database management
+
+4. **Production**:
+   - Production-ready configuration
+   - Health monitoring
+   - Log management
+   - Resource optimization
+
 ## API Documentation
 
 The API documentation is available through Swagger UI. After starting the application:
