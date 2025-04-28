@@ -61,6 +61,110 @@ npm run build
 npm start
 ```
 
+## Docker Deployment
+
+The service can be run in a Docker container. Here's how to set it up:
+
+1. Build the Docker image:
+
+   ```bash
+   docker build -t gym-buddy-user-service .
+   ```
+
+2. Run the container:
+
+   ```bash
+   docker run -d \
+     -p 3000:3000 \
+     -e DATABASE_URL="postgresql://username:password@host:5432/database_name?schema=public" \
+     -e JWT_SECRET="your-secret-key" \
+     -e JWT_EXPIRES_IN="1h" \
+     --name gym-buddy-user-service \
+     gym-buddy-user-service
+   ```
+
+3. For development with hot-reload:
+
+   ```bash
+   docker run -d \
+     -p 3000:3000 \
+     -v $(pwd):/app \
+     -e NODE_ENV=development \
+     -e DATABASE_URL="postgresql://username:password@host:5432/database_name?schema=public" \
+     -e JWT_SECRET="your-secret-key" \
+     -e JWT_EXPIRES_IN="1h" \
+     --name gym-buddy-user-service-dev \
+     gym-buddy-user-service
+   ```
+
+4. Using Docker Compose (recommended for local development):
+   Create a `docker-compose.yml` file:
+
+   ```yaml
+   version: "3.8"
+   services:
+     app:
+       build: .
+       ports:
+         - "3000:3000"
+       environment:
+         - NODE_ENV=development
+         - DATABASE_URL=postgresql://postgres:postgres@db:5432/gym_buddy?schema=public
+         - JWT_SECRET=your-secret-key
+         - JWT_EXPIRES_IN=1h
+       volumes:
+         - .:/app
+       depends_on:
+         - db
+
+     db:
+       image: postgres:15
+       environment:
+         - POSTGRES_USER=postgres
+         - POSTGRES_PASSWORD=postgres
+         - POSTGRES_DB=gym_buddy
+       ports:
+         - "5432:5432"
+       volumes:
+         - postgres_data:/var/lib/postgresql/data
+
+   volumes:
+     postgres_data:
+   ```
+
+   Then run:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+   To run migrations in the container:
+
+   ```bash
+   docker-compose exec app npm run prisma:migrate
+   ```
+
+## API Documentation
+
+The API documentation is available through Swagger UI. After starting the application:
+
+1. Visit `http://localhost:3000/api-docs` in your browser
+2. You'll see an interactive API documentation page
+3. The documentation includes:
+   - All available endpoints
+   - Request/response schemas
+   - Authentication requirements
+   - Example requests
+   - Response codes and descriptions
+
+To test the API:
+
+1. First, register a new user using the `/api/auth/register` endpoint
+2. Then login using the `/api/auth/login` endpoint to get a JWT token
+3. Click the "Authorize" button at the top of the page
+4. Enter your JWT token in the format: `Bearer your-token-here`
+5. You can now test all authenticated endpoints
+
 ## Testing
 
 Run tests:

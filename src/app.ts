@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { UserController } from './controllers/userController';
 import { AuthController } from './controllers/authController';
 import { authenticate, isAdmin } from './middleware/auth';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 dotenv.config();
 
@@ -13,6 +15,9 @@ const authController = new AuthController();
 
 app.use(cors());
 app.use(express.json());
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Auth routes
 app.post('/api/auth/token', authController.login.bind(authController));
@@ -26,7 +31,14 @@ app.post('/api/user/delete', authenticate, userController.deleteUser.bind(userCo
 // Admin routes
 app.get('/api/admin/users', authenticate, isAdmin, userController.getAllUsers.bind(userController));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-}); 
+});
+
+export default app; 
