@@ -12,20 +12,27 @@ yarn-error.log*
 # Build output
 dist/
 build/
+*.tsbuildinfo
 
-# IDE and editor files
+# IDE/Editor
 .idea/
 .vscode/
 *.swp
 *.swo
-
-# OS files
 .DS_Store
 Thumbs.db
 
 # Test coverage
 coverage/
+.nyc_output/
 
 # Logs
 logs/
 *.log
+
+# Generated files
+.prisma/
+generated/
+*.d.ts
+*.js.map
+*.js

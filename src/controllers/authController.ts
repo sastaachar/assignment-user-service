@@ -1,6 +1,7 @@
-import { Request, Response, Router } from 'express';
+import { Request, Response, Router, NextFunction } from 'express';
 import { AuthService } from '../services/authService';
-import { LoginInput } from '../types';
+import { LoginInput, UserCreateInput } from '../types';
+import { ValidationError, UnauthorizedError, ConflictError } from '../utils/errors';
 
 const router = Router();
 const authService = new AuthService();
@@ -33,16 +34,31 @@ const authService = new AuthService();
  *     responses:
  *       201:
  *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: number
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 role:
+ *                   type: string
  *       400:
  *         description: Invalid input
+ *       409:
+ *         description: User already exists
  */
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, email, password } = req.body;
-    const user = await authService.register(name, email, password);
+    const { name, email, password } = req.body as UserCreateInput;
+    const user = await authService.register({ name, email, password });
     res.status(201).json(user);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+  } catch (error: any) {
+    next(error);
   }
 });
 
@@ -78,16 +94,29 @@ router.post('/register', async (req: Request, res: Response) => {
  *               properties:
  *                 token:
  *                   type: string
+ *                 expiresIn:
+ *                   type: number
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: number
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     role:
+ *                       type: string
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password } = req.body;
-    const token = await authService.login(email, password);
-    res.json({ token });
-  } catch (error) {
-    res.status(401).json({ error: error.message });
+    const { email, password } = req.body as LoginInput;
+    const authResponse = await authService.login({ email, password });
+    res.json(authResponse);
+  } catch (error: any) {
+    next(error);
   }
 });
 

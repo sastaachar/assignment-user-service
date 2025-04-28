@@ -20,6 +20,7 @@ const options: swaggerJsdoc.Options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
+          description: 'Enter your JWT token in the format: Bearer <token>'
         },
       },
     },

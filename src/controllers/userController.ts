@@ -1,7 +1,8 @@
-import { Request, Response, Router } from 'express';
+import { Request, Response, Router, NextFunction } from 'express';
 import { UserService } from '../services/userService';
-import { UserCreateInput, UserUpdateInput } from '../types';
+import { UserUpdateInput } from '../types';
 import { authenticate, isAdmin } from '../middleware/auth';
+import { NotFoundError, ValidationError } from '../utils/errors';
 
 const router = Router();
 const userService = new UserService();
@@ -22,10 +23,16 @@ const userService = new UserService();
  */
 router.get('/profile', authenticate, async (req: Request, res: Response) => {
   try {
-    const user = await userService.getUserById(req.user.id);
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const user = await userService.getUserById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
     res.json(user);
-  } catch (error) {
-    res.status(404).json({ error: 'User not found' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to fetch user profile' });
   }
 });
 
@@ -57,10 +64,14 @@ router.get('/profile', authenticate, async (req: Request, res: Response) => {
  */
 router.put('/profile', authenticate, async (req: Request, res: Response) => {
   try {
-    const updatedUser = await userService.updateUser(req.user.id, req.body);
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const updateData = req.body as UserUpdateInput;
+    const updatedUser = await userService.updateUser(req.user.userId, updateData);
     res.json(updatedUser);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Failed to update profile' });
   }
 });
 
@@ -96,11 +107,17 @@ router.put('/profile', authenticate, async (req: Request, res: Response) => {
  */
 router.post('/change-password', authenticate, async (req: Request, res: Response) => {
   try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
     const { currentPassword, newPassword } = req.body;
-    await userService.changePassword(req.user.id, currentPassword, newPassword);
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Missing current or new password' });
+    }
+    await userService.changePassword(req.user.userId, currentPassword, newPassword);
     res.json({ message: 'Password changed successfully' });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Failed to change password' });
   }
 });
 
@@ -124,8 +141,103 @@ router.get('/admin/users', authenticate, isAdmin, async (req: Request, res: Resp
   try {
     const users = await userService.getAllUsers();
     res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to fetch users' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/user/delete:
+ *   delete:
+ *     summary: Delete user account
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User account deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User account deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
+router.delete('/delete', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const user = await userService.getUserById(req.user.userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    await userService.deleteUser(req.user.userId);
+    res.json({ message: 'User account deleted successfully' });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/admin/users/{id}:
+ *   delete:
+ *     summary: Delete a user (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: User ID to delete
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (not admin)
+ *       404:
+ *         description: User not found
+ */
+router.delete('/admin/users/:id', authenticate, isAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      throw new ValidationError('Invalid user ID');
+    }
+
+    const user = await userService.getUserById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    await userService.deleteUser(userId);
+    res.json({ message: 'User deleted successfully' });
+  } catch (error: any) {
+    next(error);
   }
 });
 
