@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -28,7 +29,7 @@ const options: swaggerJsdoc.Options = {
       bearerAuth: [],
     }],
   },
-  apis: ['./src/controllers/*.ts'], // Path to the API docs
+  apis: [path.join(__dirname, '../controllers/*.{js,ts}')], // Use relative path that works in both dev and prod
 };
 
 export const swaggerSpec = swaggerJsdoc(options); 

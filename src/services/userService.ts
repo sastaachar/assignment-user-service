@@ -1,9 +1,9 @@
 import { UserCreateInput, UserUpdateInput } from '../types';
-import { dbService } from './dbService';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 export class UserService {
-  private prisma = dbService.getPrisma();
+  constructor(private prisma: PrismaClient) { }
 
   async createUser(data: UserCreateInput) {
     const hashedPassword = await bcrypt.hash(data.password, 10);

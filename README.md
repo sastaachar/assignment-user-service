@@ -65,6 +65,26 @@ npm start
 
 The service can be run in a Docker container. Here's how to set it up:
 
+### Using Docker Hub
+
+The service is available on Docker Hub. You can pull and run it directly:
+
+```bash
+# Pull the image
+docker pull justinmathew/gym-buddy-user-service:latest
+
+# Run the container
+docker run -d \
+  -p 3000:3000 \
+  -e DATABASE_URL="postgresql://username:password@host:5432/database_name?schema=public" \
+  -e JWT_SECRET="your-secret-key" \
+  -e JWT_EXPIRES_IN="1h" \
+  --name gym-buddy-user-service \
+  justinmathew/gym-buddy-user-service:latest
+```
+
+### Building Locally
+
 1. Build the Docker image:
 
    ```bash

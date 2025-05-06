@@ -2,9 +2,10 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import { UserService } from './userService';
 import { LoginInput, AuthResponse, JwtPayload, UserCreateInput } from '../types';
 import { ValidationError, UnauthorizedError, ConflictError } from '../utils/errors';
+import { dbService } from './dbService';
 
 // Create a single instance of UserService
-const userService = new UserService();
+const userService = new UserService(dbService.getPrisma());
 
 interface AuthResponseWithUser extends AuthResponse {
   user: {

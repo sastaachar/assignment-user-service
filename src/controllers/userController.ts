@@ -3,9 +3,10 @@ import { UserService } from '../services/userService';
 import { UserUpdateInput } from '../types';
 import { authenticate, isAdmin } from '../middleware/auth';
 import { NotFoundError, ValidationError } from '../utils/errors';
+import { dbService } from '../services/dbService';
 
 const router = Router();
-const userService = new UserService();
+const userService = new UserService(dbService.getPrisma());
 
 /**
  * @swagger
